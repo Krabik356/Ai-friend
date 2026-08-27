@@ -103,7 +103,7 @@ async def stop(user_id=Depends(is_valid_id)):
     messages = []
     user_data = []
     async with pool.connection() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(
                 "SELECT id, user_req, ai_resp_text FROM messages WHERE user_id=%s ORDER BY id DESC LIMIT 100",
                 (user_id,))
