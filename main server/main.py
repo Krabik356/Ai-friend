@@ -75,6 +75,13 @@ async def get_reputation(user_id=Depends(is_valid_id_in_db), conn=Depends(get_co
         reputation = (await cur.fetchone())[0]
         return {"reputation": reputation}
 
+@app.get("/messages/clear", status_code=200)
+async def clear_messages(user_id=Depends(is_valid_id_in_db), conn=Depends(get_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute("DELETE FROM messages WHERE user_id=%s", (user_id,))
+        await cur.execute("UPDATE users SET reputation=50 WHERE id=%s", (user_id,))
+
+
 @app.get("/audio/start", status_code=201)
 def start(user_id=Depends(get_user_id)):
     audios[user_id] = bytearray()
