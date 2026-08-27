@@ -78,37 +78,37 @@ int sendButton = 21;
 
 void setFaceByReputation(){
   client.begin("http://192.168.0.103:8000/user/reputation");
-    client.addHeader("id", id);
-    client.addHeader("Content-Type", "application/json");
-    int code5 = client.GET();
-    
-    if(code5 == 200){
-      JsonDocument doc;
-      String strReputation = client.getString();
-      deserializeJson(doc, strReputation);
+  client.addHeader("id", id);
+  client.addHeader("Content-Type", "application/json");
+  int code5 = client.GET();
+  
+  if(code5 == 200){
+    JsonDocument doc;
+    String strReputation = client.getString();
+    deserializeJson(doc, strReputation);
 
-      int reputation = doc["reputation"];
-      if (reputation >= 50 && reputation <= 70) {
-          normal();
-      }
-      else if (reputation >= 70 && reputation <= 90) {
-          normal();
-      }
-      else if (reputation >= 90 && reputation <= 100) {
-          friendly();
-      }
-      else if (reputation >= 40 && reputation <= 50) {
-          sad();
-      }
-      else if (reputation >= 0 && reputation <= 40) {
-          rude();
-      }
-
-    }else{
-      normal();
+    int reputation = doc["reputation"];
+    if (reputation >= 50 && reputation <= 70) {
+        normal();
+    }
+    else if (reputation >= 70 && reputation <= 90) {
+        normal();
+    }
+    else if (reputation >= 90 && reputation <= 100) {
+        friendly();
+    }
+    else if (reputation >= 40 && reputation <= 50) {
+        sad();
+    }
+    else if (reputation >= 0 && reputation <= 40) {
+        rude();
     }
 
-    client.end();
+  }else{
+    normal();
+  }
+
+  client.end();
 }
 
 
