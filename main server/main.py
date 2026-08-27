@@ -36,17 +36,22 @@ def get_user_id(req: Request):
         raise HTTPException(status_code=400, detail="incorrect usage of endpoint")
     return user_id
 
-async def is_valid_id(req: Request):
+async def is_valid_id_in_dict(req: Request):
     user_id = req.headers.get("id", False)
     if user_id == False:
         raise HTTPException(status_code=400, detail="incorrect usage of endpoint")
     if user_id not in audios.keys():
         raise HTTPException(status_code=403, detail="unknown id")
+    return user_id
+
+async def is_valid_id_in_db(req: Request):
+    user_id = req.headers.get("id", False)
+    if user_id == False:
+        raise HTTPException(status_code=400, detail="incorrect usage of endpoint")
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute("SELECT EXISTS(SELECT id from users WHERE id=%s)", (user_id,))
             is_exists = (await cur.fetchone())[0]
-            print(is_exists)
             if not is_exists:
                 raise HTTPException(status_code=403, detail="unknown id")
     return user_id
@@ -63,12 +68,19 @@ async def register_user(user_id=Depends(get_user_id), conn=Depends(get_conn)):
         except UniqueViolation:
             raise HTTPException(status_code=409, detail="user already exists")
 
+@app.get("/user/reputation", status_code=200)
+async def get_reputation(user_id=Depends(is_valid_id_in_db), conn=Depends(get_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT reputation FROM users WHERE id=%s", (user_id,))
+        reputation = (await cur.fetchone())[0]
+        return {"reputation": reputation}
+
 @app.get("/audio/start", status_code=201)
 def start(user_id=Depends(get_user_id)):
     audios[user_id] = bytearray()
 
 @app.post("/audio/record", status_code=200)
-async def record(req: Request, user_id=Depends(is_valid_id)):
+async def record(req: Request, user_id=Depends(is_valid_id_in_dict)):
     audios[user_id].extend(await req.body())
 
 async def ai_response(user_data, audio, messages, user_id):
@@ -96,8 +108,8 @@ async def ai_response(user_data, audio, messages, user_id):
                 await cur.execute("INSERT INTO messages(user_id, user_req, ai_resp_text) VALUES(%s, %s, %s)", (user_id, user_req, ai_resp_text))
                 await cur.execute("UPDATE users SET reputation=%s WHERE id=%s", (reputation, user_id))
 
-@app.get("/audio/stop", status_code=200)
-async def stop(user_id=Depends(is_valid_id)):
+@app.get("/audio/stop", status_code=200, dependencies=[Depends(is_valid_id_in_db)])
+async def stop(user_id=Depends(is_valid_id_in_dict)):
     audio = audios.pop(user_id)
 
     messages = []

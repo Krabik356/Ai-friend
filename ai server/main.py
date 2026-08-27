@@ -46,12 +46,10 @@ async def generate_generator(reputation, messages):
             for voice_part in text_to_voice.synthesize(text):
                 voice_bytes.extend(voice_part.audio_int16_bytes)
             yield json.dumps({"reputation": reputation, "ai_resp_text": text, "ai_resp_voice": base64.b64encode(voice_bytes).decode("ascii"), "user_req": messages[len(messages)-1]})+"\n"
-            print(text)
             text = ""
 
 @app.post("/ai/generate/stream/voice", status_code=200)
 async def generate(req: Request):
-    print("start")
     data = await req.json()
     reputation = data["reputation"]
     messages = data["messages"]
