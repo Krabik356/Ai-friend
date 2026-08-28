@@ -75,6 +75,7 @@ void rude(){
 
 HTTPClient client;
 int sendButton = 21;
+int messagesClearButton = 17;
 
 void setFaceByReputation(){
   client.begin("http://192.168.0.103:8000/user/reputation");
@@ -181,9 +182,20 @@ void setup() {
   setFaceByReputation();
 
   pinMode(sendButton, INPUT_PULLUP);
+  pinMode(messagesClearButton, INPUT_PULLUP);
 }
 
 void loop() {
+  if(!digitalRead(messagesClearButton)){
+    thinking();
+    client.begin("http://192.168.0.103:8000/messages/clear");
+    client.addHeader("id", id);
+    client.GET();
+    client.end();
+    normal();
+    delay(30);
+  }
+
   if(!digitalRead(sendButton)){
     delay(30);
     while(!digitalRead(sendButton)){
@@ -246,12 +258,16 @@ void loop() {
     client.addHeader("id", id);
     int code4 = client.GET();
 
-    normal();
     if(code4 == 200){
       NetworkClient *stream = client.getStreamPtr();
       long sentenseSize = 0;
-
+      bool isStart = false;
+      
       while(client.connected() || stream->available()){
+        if(!isStart){
+          normal();
+          isStart = true;
+        }
         
         if(sentenseSize == 0){
           String stringSize = stream->readStringUntil('\n');
