@@ -10,7 +10,7 @@ String id = "12d1h2871";
 
 
 Adafruit_ST7735 tft = Adafruit_ST7735(8, 15, 16, 7, 48);
-int screenLed = 7;
+int screenLed = 20;
 int leftEye[5];
 int rightEye[5];
 uint16_t purple;
